@@ -1,0 +1,139 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Nezha Emotions</title>
+    <style>
+        html {
+            width: 100%;
+            height: 100%;
+        }
+
+        body {
+            width: 100%;
+            height: 100%;
+            display: flex;
+            flex-direction: column;
+            margin: 0;
+        }
+
+        canvas {
+            margin: auto;
+        }
+
+        .button-group {
+            margin: 2rem;
+            display: flex;
+            flex-wrap: wrap;
+        }
+
+        .emotion-button {
+            margin: 2rem;
+            padding: 1.5rem;
+            font-size: 3rem;
+            border: 10px red solid;
+            border-radius: 10rem;
+            background-color: #800000;
+            color: white;
+        }
+
+        .resource-group {
+            display: none;
+        }
+    </style>
+</head>
+<body>
+<canvas></canvas>
+<div class="button-group">
+</div>
+<div class="resource-group">
+    <img class="emotion-image" src="./emotions/emotion_image.png" alt="emotion-image"/>
+    <audio class="emotion-audio-1" src="./emotions/emotion1.mp3"></audio>
+    <audio class="emotion-audio-2" src="./emotions/emotion2.mp3"></audio>
+</div>
+<script type="module">
+    import {emotionConfig} from "./emotions/emotion_config.js";
+
+    const canvasElement = document.querySelector('canvas');
+    const canvasContext = canvasElement.getContext('2d');
+    canvasElement.width = emotionConfig.spriteWidth * 3;
+    canvasElement.height = emotionConfig.spriteHeight * 3;
+
+    const buttonGroupElement = document.querySelector('.button-group');
+
+    const emotionImage = document.querySelector('.emotion-image');
+    const emotionAudio1 = document.querySelector('.emotion-audio-1');
+    const emotionAudio2 = document.querySelector('.emotion-audio-2');
+
+    emotionConfig.states.forEach(state => {
+        const emotionButton = document.createElement('div');
+        emotionButton.classList.add('emotion-button');
+        emotionButton.innerText = state.name;
+
+        emotionButton.onclick = () => {
+            animate(state);
+            audio(state);
+        };
+
+        buttonGroupElement.appendChild(emotionButton);
+    });
+
+    let animateNumber = 0;
+    function animate(emotion) {
+        if (animateNumber) {
+            clearInterval(animateNumber);
+            animateNumber = 0;
+        }
+        let length = emotion.frames.length;
+
+        if (length === 0) {
+            return;
+        }
+
+        if (length === 1) {
+            drawFrame(emotion.frames[0]);
+        }
+
+        if (length > 1) {
+            let index = 0;
+            const handler = () => {
+                let frame = emotion.frames[index];
+                drawFrame(frame);
+
+                index++;
+                if (index === length) {
+                    // index = 0;
+                    clearInterval(animateNumber);
+                }
+                return handler;
+            };
+            animateNumber = setInterval(handler(), 100);
+        }
+    }
+
+    function drawFrame(frame) {
+        canvasContext.clearRect(0, 0, canvasElement.width, canvasElement.height);
+        canvasContext.drawImage(emotionImage, frame.x, frame.y, emotionConfig.spriteWidth, emotionConfig.spriteHeight,
+            0, 0, canvasElement.width, canvasElement.height);
+    }
+
+    let selectedAudio;
+    function audio(state) {
+        if (selectedAudio) {
+            selectedAudio.pause();
+            selectedAudio.currentTime = 0;
+        }
+
+        if (emotionConfig.states.indexOf(state) === 0) {
+            selectedAudio = emotionAudio1;
+        } else if (emotionConfig.states.indexOf(state) === 1) {
+            selectedAudio = emotionAudio2;
+        }
+
+        if (selectedAudio) {
+            selectedAudio.play();
+        }
+    }
+</script>
+</body>
+</html>
